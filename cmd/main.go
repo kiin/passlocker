@@ -1,20 +1,20 @@
 package main
 
-import 
-(
-	"fmt"
+import (
 	"flag"
+	"fmt"
 	"os"
-	"github.com/syndtr/goleveldb/leveldb"
-	"log"
+	"passlocker/internal/locker"
 )
 
-func main(){
-	db, err := leveldb.OpenFile("tmp/test.db", nil)
-	if err != nil {
-		log.Fatal("Yikes!")
+func main() {
+	locker := locker.Locker{
+		Key:      "test",
+		Locked:   false,
+		Elements: []locker.Element{},
 	}
-	defer db.Close()
+	locker.Connect()
+	defer locker.Disconnect()
 	fmt.Println("Hello World!")
 	setPassFlag := flag.Bool("set", false, "Add new Password")
 	getPassFlag := flag.Bool("get", false, "Get Password")
@@ -27,27 +27,20 @@ func main(){
 		fmt.Scan(&passName)
 		fmt.Print("Password Value: ")
 		fmt.Scan(&passValue)
-		if passName != "" && passValue != ""{
-			err = db.Put([]byte(passName), []byte(passValue), nil)
-			if err != nil{
-				log.Fatal("Yikes!")
-			}
+		if passName != "" && passValue != "" {
+			locker.AddElement(passName, passValue)
 			fmt.Printf("Added new Password %s\n", passName)
-		}else{
+		} else {
 			fmt.Println("You need to add both password name '-n' and value '-p'")
 			os.Exit(1)
 		}
-	}else if *getPassFlag && !*setPassFlag {
+	} else if *getPassFlag && !*setPassFlag {
 		fmt.Print("Password Name: ")
 		fmt.Scan(&passName)
 		fmt.Println("We are getting Password")
-		data, err := db.Get([]byte(passName), nil)
-		if err != nil{
-			log.Fatal("Yikes!")
-		}
-
-		fmt.Printf("Your Password: %s\n", string(data))
-	}else{
+		data := locker.GetElement(passName)
+		fmt.Printf("Your Password: %s\n", data)
+	} else {
 		fmt.Println("Please use only one of 'get' or 'set' flags")
 		os.Exit(1)
 	}
