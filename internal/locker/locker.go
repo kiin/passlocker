@@ -35,10 +35,14 @@ func (l *Locker) Lock() {
 }
 
 func (l *Locker) Unlock() {
+	// Require main password
 	l.Locked = false
 }
 
 func (l *Locker) AddElement(key string, value string) {
+	if l.Locked {
+		return
+	}
 	l.Elements = append(l.Elements, Element{key: key, value: value})
 	err := l.Db.Put([]byte(key), []byte(value), nil)
 	if err != nil {
@@ -47,6 +51,9 @@ func (l *Locker) AddElement(key string, value string) {
 }
 
 func (l *Locker) GetElement(key string) string {
+	if l.Locked {
+		return
+	}
 	for _, element := range l.Elements {
 		if element.key == key {
 			foundElement := element.value
@@ -61,6 +68,9 @@ func (l *Locker) GetElement(key string) string {
 }
 
 func (l *Locker) RemoveElement(key string) {
+	if l.Locked {
+		return
+	}
 	// Find the index of the object to remove
 	indexToRemove := -1
 	for i, element := range l.Elements {

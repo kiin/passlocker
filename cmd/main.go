@@ -10,10 +10,11 @@ import (
 func main() {
 	locker := locker.Locker{
 		Key:      "test",
-		Locked:   false,
+		Locked:   true,
 		Elements: []locker.Element{},
 	}
 	locker.Connect()
+	locker.Unlock()
 	defer locker.Disconnect()
 	fmt.Println("Hello World!")
 	setPassFlag := flag.Bool("set", false, "Add new Password")
