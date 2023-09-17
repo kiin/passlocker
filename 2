@@ -5,21 +5,11 @@ import (
 	"fmt"
 	"html/template"
 	"os"
-	"io"
 	"passlocker/internal/locker"
 	"passlocker/pkg/view"
 	"net/http"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/thedevsaddam/renderer"
 )
-
-type TemplateRenderer struct {
-	templates *template.Template
-}
-
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
-}
 
 type Item struct {
     Name string
@@ -31,6 +21,13 @@ type Content struct {
     Items []Item
 }
 
+var rnd *renderer.Render
+
+func RenderTmpl(w http.ResponseWriter, r *http.Request) {
+	rnd.HTML(w, http.StatusOK, "index", nil)
+
+}
+
 func main() {
 	fmt.Println("Hello World!")
 	setPassFlag := flag.Bool("set", false, "Add new Password")
@@ -39,7 +36,10 @@ func main() {
 	flag.Parse()
 	passName := ""
 	if *justServe{
-		e := echo.New()
+		opts := renderer.Options{
+			ParseGlobPattern: "./public/*.html",
+		}
+		rnd = renderer.New(opts)
 		tmpl := template.New("index")
 		var err error
 		if tmpl, err = tmpl.Parse(view.Index); err != nil {
@@ -57,21 +57,8 @@ func main() {
 		if tmpl, err = tmpl.Parse(view.ItemCount); err != nil {
 			fmt.Println(err)
 		}
-		e.Renderer = &TemplateRenderer{
-			templates: tmpl,
-		}
-		items := Content{
-			Items: []Item{
-				{Name: "Item 1", Count: 1, Id: 1},
-				{Name: "Item 2", Count: 2, Id: 2},
-				{Name: "Item 3", Count: 3, Id: 3},
-			},
-		}
-		e.Use(middleware.Logger())
-		e.GET("/", func(c echo.Context) error {
-			return c.Render(http.StatusOK, "index", items)
-		})
-		e.Logger.Fatal(e.Start(":3000"))
+		http.HandleFunc("/", RenderTmpl)
+		http.ListenAndServe(":3000", nil)
 
 	}else{
 		locker := locker.Locker{

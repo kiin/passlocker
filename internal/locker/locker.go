@@ -52,7 +52,7 @@ func (l *Locker) AddElement(key string, value string) {
 
 func (l *Locker) GetElement(key string) string {
 	if l.Locked {
-		return
+		return ""
 	}
 	for _, element := range l.Elements {
 		if element.key == key {
