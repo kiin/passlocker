@@ -7,8 +7,8 @@ import (
 )
 
 type Element struct {
-	key   string
-	value string
+	Key   string
+	Value string
 }
 
 type Locker struct {
@@ -43,7 +43,7 @@ func (l *Locker) AddElement(key string, value string) {
 	if l.Locked {
 		return
 	}
-	l.Elements = append(l.Elements, Element{key: key, value: value})
+	l.Elements = append(l.Elements, Element{Key: key, Value: value})
 	err := l.Db.Put([]byte(key), []byte(value), nil)
 	if err != nil {
 		log.Fatal("Yikes!")
@@ -55,8 +55,8 @@ func (l *Locker) GetElement(key string) string {
 		return ""
 	}
 	for _, element := range l.Elements {
-		if element.key == key {
-			foundElement := element.value
+		if element.Key == key {
+			foundElement := element.Value
 			log.Print(foundElement)
 		}
 	}
@@ -74,7 +74,7 @@ func (l *Locker) RemoveElement(key string) {
 	// Find the index of the object to remove
 	indexToRemove := -1
 	for i, element := range l.Elements {
-		if element.key == key {
+		if element.Key == key {
 			indexToRemove = i
 			break
 		}
@@ -82,4 +82,19 @@ func (l *Locker) RemoveElement(key string) {
 	if indexToRemove != -1 {
 		l.Elements = append(l.Elements[:indexToRemove], l.Elements[indexToRemove+1:]...)
 	}
+}
+
+func (l *Locker) GetAllElements() []Element {
+	iter := l.Db.NewIterator(nil, nil)
+	for iter.Next() {
+		key := iter.Key()
+		value := iter.Value()
+		l.Elements = append(l.Elements, Element{Key: string(key), Value: string(value)})
+	}
+	iter.Release()
+	err := iter.Error()
+	if err != nil {
+		return []Element{}
+	}
+	return l.Elements
 }

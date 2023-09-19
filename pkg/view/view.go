@@ -22,19 +22,8 @@ var Items = `{{define "items"}}
 {{end}}
 {{end}}`
 
-var ItemCount = `{{define "item-count"}}
-<div hx-trigger="click"
-    hx-post="/count/{{.Id}}"
-    hx-swap="outerHTML"
-    class="count">{{.Count}}</div>
-{{end}}`
-
 var Item = `{{define "item"}}
 <div class="item">
-    <div class="name">{{.Name}}</div>
-    {{template "item-count" .}}
-    <form hx-trigger="click" hx-delete="/item/{{.Id}}" hx-target="closest .item">
-        Delete
-    </form>
+    <div class="name">{{.Key}} - {{.Value}}</div>
 </div>
 {{end}}`

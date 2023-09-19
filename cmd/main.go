@@ -4,11 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"os"
 	"io"
+	"net/http"
+	"os"
 	"passlocker/internal/locker"
 	"passlocker/pkg/view"
-	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -22,13 +23,13 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 }
 
 type Item struct {
-    Name string
-    Count int
-    Id int
+	Name  string
+	Count int
+	Id    int
 }
 
 type Content struct {
-    Items []Item
+	Items []locker.Element
 }
 
 func main() {
@@ -38,7 +39,17 @@ func main() {
 	justServe := flag.Bool("server", false, "Serve html")
 	flag.Parse()
 	passName := ""
-	if *justServe{
+
+	locker := locker.Locker{
+		Key:      "test",
+		Locked:   true,
+		Elements: []locker.Element{},
+	}
+	locker.Connect()
+	locker.Unlock()
+	defer locker.Disconnect()
+
+	if *justServe {
 		e := echo.New()
 		tmpl := template.New("index")
 		var err error
@@ -53,19 +64,12 @@ func main() {
 		if tmpl, err = tmpl.Parse(view.Item); err != nil {
 			fmt.Println(err)
 		}
-
-		if tmpl, err = tmpl.Parse(view.ItemCount); err != nil {
-			fmt.Println(err)
-		}
 		e.Renderer = &TemplateRenderer{
 			templates: tmpl,
 		}
+
 		items := Content{
-			Items: []Item{
-				{Name: "Item 1", Count: 1, Id: 1},
-				{Name: "Item 2", Count: 2, Id: 2},
-				{Name: "Item 3", Count: 3, Id: 3},
-			},
+			Items: locker.GetAllElements(),
 		}
 		e.Use(middleware.Logger())
 		e.GET("/", func(c echo.Context) error {
@@ -73,16 +77,7 @@ func main() {
 		})
 		e.Logger.Fatal(e.Start(":3000"))
 
-	}else{
-		locker := locker.Locker{
-			Key:      "test",
-			Locked:   true,
-			Elements: []locker.Element{},
-		}
-		locker.Connect()
-		locker.Unlock()
-		defer locker.Disconnect()
-
+	} else {
 		if *setPassFlag && !*getPassFlag {
 			passValue := ""
 			fmt.Println("We are setting Password")
