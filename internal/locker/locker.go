@@ -2,6 +2,7 @@ package locker
 
 import (
 	"log"
+	"strings"
 
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -88,7 +89,7 @@ func (l *Locker) GetAllElements() []Element {
 	iter := l.Db.NewIterator(nil, nil)
 	for iter.Next() {
 		key := iter.Key()
-		value := iter.Value()
+		value := strings.Repeat("*", len(iter.Value()))
 		l.Elements = append(l.Elements, Element{Key: string(key), Value: string(value)})
 	}
 	iter.Release()
